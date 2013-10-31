@@ -15,23 +15,87 @@
   <body>
     <canvas id="stage" width="800px" height="600px"></canvas>
     <script>
+      var MS_PER_PX = 50;
+
       var stage = new createjs.Stage('stage');
-
-      var circle = new createjs.Shape();
-      circle.graphics.beginFill('red').drawCircle(40, 40, 40);
-      circle.x = circle.y = 0;
-
-      stage.addChild(circle);
-
       var tween = new Pangaea();
-      tween.add(new Tween(circle, 1000.0, {x: 500, y: 500}));
+
+      var buffered = new createjs.Shape();
+      buffered.graphics.beginFill('gray').drawRect(0, 0, 1, 5);
+      buffered.x = 0;
+      buffered.y = 595;
+      buffered.scaleX = 0.0;
+
+      var playhead = new createjs.Shape();
+      playhead.graphics.beginFill('blue').drawCircle(0.0, 0, 10);
+      playhead.x = 0;
+      playhead.y = 595;
+
+      function makeCircle() {
+        var randomColor = Math.floor(Math.random() * Math.pow(2, 24)).toString(16);
+        var randomSize = 5.0 + Math.random() * 50.0;
+        var circle = new createjs.Shape();
+        circle.graphics.beginFill('#' + randomColor).drawCircle(randomSize, randomSize, randomSize);
+        circle.x = Math.random() * 800.0;
+        circle.y = Math.random() * 600.0;
+        addRandomTween(circle);
+        return circle;
+      };
+
+      function addRandomTween(circle) {
+        var duration = 1000.0 + Math.random() * 800.0;
+        var xloc = Math.random() * 800.0;
+        var yloc = Math.random() * 600.0;
+        var alphaval = 0.25 + Math.random() * 0.75;
+        tween.add(new Tween(circle, duration, {x: xloc, y: yloc, alpha: alphaval}));
+        setTimeout(function() {
+          addRandomTween(circle);
+        }, duration + 100.0);
+      };
+
+      for (var i = 0; i < 30; i++) {
+        stage.addChild(makeCircle());
+      }
+
+      stage.addChild(buffered);
+      stage.addChild(playhead);
 
       createjs.Ticker.setFPS(60);
       createjs.Ticker.addEventListener('tick', update);
 
       function update(e) {
         tween.tick(e.delta);
+
+        buffered.scaleX = tween.getClock() / MS_PER_PX;
+
+        if (!downOnPlayhead)
+          playhead.x = tween.getPlayhead() / MS_PER_PX;
+
         stage.update();
+      }
+
+      playhead.addEventListener('mousedown', playheadDown);
+      playhead.addEventListener('pressup', playheadUp);
+      playhead.addEventListener('pressmove', playheadMove);
+
+      var downOnPlayhead = false;
+
+      function playheadDown(e) {
+        downOnPlayhead = true;
+        tween.pause();
+      }
+
+      function playheadUp(e) {
+        downOnPlayhead = false;
+        tween.resume();
+      }
+
+      function playheadMove(e) {
+        if (downOnPlayhead) {
+          playhead.x = e.stageX;
+          playhead.x = Math.min(playhead.x, buffered.scaleX);
+          tween.setPlayhead(playhead.x * MS_PER_PX);
+        }
       }
     </script>
   </body>
