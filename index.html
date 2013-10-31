@@ -1,0 +1,38 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Pangaea Demo</title>
+    <style>
+      #stage {
+        border: 1px solid black;
+        margin: 0 auto;
+        display: block;
+      }
+    </style>
+    <script src="http://code.createjs.com/easeljs-0.7.0.min.js"></script>
+    <script src="pangaea.js"></script>
+  </head>
+  <body>
+    <canvas id="stage" width="800px" height="600px"></canvas>
+    <script>
+      var stage = new createjs.Stage('stage');
+
+      var circle = new createjs.Shape();
+      circle.graphics.beginFill('red').drawCircle(40, 40, 40);
+      circle.x = circle.y = 0;
+
+      stage.addChild(circle);
+
+      var tween = new Pangaea();
+      tween.add(new Tween(circle, 1000.0, {x: 500, y: 500}));
+
+      createjs.Ticker.setFPS(60);
+      createjs.Ticker.addEventListener('tick', update);
+
+      function update(e) {
+        tween.tick(e.delta);
+        stage.update();
+      }
+    </script>
+  </body>
+</html>
